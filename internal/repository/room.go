@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"golang_template/internal/database/postgres"
@@ -38,20 +38,26 @@ func NewRoomRepository(db postgres.Database, logger *zap.Logger, grpc rpc_servic
 func (r roomRepository) CreateRoom(ctx context.Context, roomName string, capacity int) (*models.Room, error) {
 	channel := slugifyChannel(roomName)
 
-	originalSlug := channel
-	counter := 1
+	// Check if slug already exists
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&models.Room{}).
+		Where("channel = ?", channel).
+		Count(&count).Error; err != nil {
 
-	for {
-		var count int64
-		r.db.WithContext(ctx).Model(&models.Room{}).Where("channel = ?", channel).Count(&count)
-		if count == 0 {
-			break
-		}
-		counter++
-		channel = originalSlug + "-" + strconv.Itoa(counter)
+		r.logger.Error("DB error while checking room slug", zap.Error(err))
+		return nil, err
 	}
 
-	// Step 3: create the room
+	if count > 0 {
+		r.logger.Debug("Room name already exists",
+			zap.String("room_name", roomName),
+			zap.String("channel", channel),
+		)
+		return nil, errors.New("Channel already exists")
+	}
+
+	// Create the room
 	room := &models.Room{
 		RoomName: roomName,
 		Channel:  channel,
@@ -59,13 +65,15 @@ func (r roomRepository) CreateRoom(ctx context.Context, roomName string, capacit
 	}
 
 	if err := r.db.WithContext(ctx).Create(room).Error; err != nil {
-		r.logger.Error("Error while creating room", zap.Error(err))
+		r.logger.Error("Error while creating room",
+			zap.Error(err),
+			zap.String("channel", channel),
+		)
 		return nil, err
 	}
 
 	// Run a gRPC‌ request to publish joining in channel
-
-	go func() {
+	go func() { // This should place inside service, anyway...
 		fmt.Println(room.Channel)
 		req := &rpc_service.PublishRequest{
 			Channel:     room.Channel,

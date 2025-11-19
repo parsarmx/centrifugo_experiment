@@ -33,21 +33,17 @@ func NewRoomController(service service.RoomService, logger *zap.Logger) RoomCont
 func (c *roomController) CreateRoom(ctx echo.Context) error {
 	var req dto.CreateRoomRequest
 
-	// Parse JSON
 	if err := ctx.Bind(&req); err != nil {
 		c.logger.Error("Failed to bind request", zap.Error(err))
 		return response.SendError(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
 	}
 
-	// Validate
 	if err := c.requestValidator.ValidateStruct(req); err != nil {
 		return response.SendError(ctx, "Invalid input", http.StatusBadRequest, err.Error())
 	}
 
-	// Service call
 	room, err := c.service.CreateRoom(ctx.Request().Context(), req.RoomName, req.Capacity)
 	if err != nil {
-		// Custom errors example: room already exists
 		if errors.Is(err, service.ErrRoomNameExists) {
 			return response.SendError(ctx, "Room already exists", http.StatusConflict, "duplicate_room")
 		}
