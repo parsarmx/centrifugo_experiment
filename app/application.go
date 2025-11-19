@@ -38,6 +38,7 @@ func (a *application) Setup() {
 			a.InitFramework,
 			a.InitRedis,
 			a.InitRouter,
+			a.InitGRPCServer,
 		),
 		postgres.Module,
 		fx.Invoke(func(lifecycle fx.Lifecycle, e *echo.Echo, logger *zap.Logger, router router.Router) {

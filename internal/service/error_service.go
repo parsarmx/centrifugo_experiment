@@ -44,4 +44,16 @@ var (
 		Msg: "failed to create refresh token",
 		Err: errors.New("refresh token creation error"),
 	}
+	ErrInvalidRoomName = &ServiceErr{
+		Msg: "invalid room name",
+		Err: errors.New("invalid room name"),
+	}
+	ErrInvalidRoomCapacity = &ServiceErr{
+		Msg: "invalid room cap",
+		Err: errors.New("invalid room cap"),
+	}
+	ErrRoomNameExists = &ServiceErr{
+		Msg: "room name exists",
+		Err: errors.New("rome already exists"),
+	}
 )

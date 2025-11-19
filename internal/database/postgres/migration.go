@@ -13,6 +13,9 @@ func Run(db Database, logger *zap.Logger) {
 	logger.Info("Running migrations...")
 	if err := db.Gorm().AutoMigrate(
 		&models.User{},
+		&models.Room{},
+		&models.RoomMember{},
+		&models.Message{},
 	); err != nil {
 		logger.Fatal("Migration failed", zap.Error(err))
 	}
