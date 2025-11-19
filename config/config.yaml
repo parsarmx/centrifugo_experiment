@@ -1,0 +1,38 @@
+server:
+  port: 3002
+  host: localhost
+  mode: development
+  read_timeout: 10
+  write_timeout: 10
+
+db:
+  host: db
+  port: 5432
+  user: myuser
+  password: mypassword
+  dbname: golang_template
+  sslmode: disable
+  max_conns: 2
+  min_conns: 1
+
+logger:
+  level: info
+  time_key: timestamp
+  level_key: level
+  name_key: logger
+  caller_key: caller
+  message_key: message
+  stacktrace_key: stacktrace
+  lumberjack:
+    filename: "log/app.log"
+    max_size: 5
+    max_age: 7
+    max_backups: 4
+    local_time: true
+    compress: false
+
+rabbit:
+  host: mq
+  port: 5672
+  user: guest
+  password: guest
