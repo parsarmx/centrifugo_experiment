@@ -8,16 +8,20 @@ import (
 )
 
 type Repository interface {
+	UserRepository() UserRepository
 }
 
 type repository struct {
-	ctx context.Context
-	db  postgres.Database
+	userRepository UserRepository
 }
 
 func NewRepository(ctx context.Context, db postgres.Database, logger *zap.Logger) Repository {
+	userRepository := NewUserRepository(db, logger)
 	return &repository{
-		ctx: ctx,
-		db:  db,
+		userRepository: userRepository,
 	}
+}
+
+func (r *repository) UserRepository() UserRepository {
+	return r.userRepository
 }

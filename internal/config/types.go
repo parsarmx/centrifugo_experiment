@@ -4,7 +4,9 @@ type Config struct {
 	Server ServerConfig   `mapstructure:"server" validate:"required"`
 	DB     DatabaseConfig `mapstructure:"db" validate:"required"`
 	Logger LoggerConfig   `mapstructure:"logger" validate:"required"`
-	Rabbit RabbitConfig   `mapstructure:"rabbit" validate:"required"`
+	// Rabbit RabbitConfig   `mapstructure:"rabbit" validate:"required"`
+	Redis RedisConfig `mapstructure:"redis" validate:"required"`
+	Auth  AuthConfig  `mapstructure:"auth" validate:"required"`
 }
 
 type DatabaseConfig struct {
@@ -46,9 +48,40 @@ type LumberjackConfig struct {
 	Compress   bool   `mapstructure:"compress"`
 }
 
-type RabbitConfig struct {
-	Host          string `mapstructure:"host" validate:"required,hostname|ip"`
-	Port          string `mapstructure:"port" validate:"required,number"`
-	User          string `mapstructure:"user" validate:"required"`
-	Password      string `mapstructure:"password" validate:"required"`
+// type RabbitConfig struct {
+// 	Host     string `mapstructure:"host" validate:"required,hostname|ip"`
+// 	Port     string `mapstructure:"port" validate:"required,number"`
+// 	User     string `mapstructure:"user" validate:"required"`
+// 	Password string `mapstructure:"password" validate:"required"`
+// }
+
+type AuthConfig struct {
+	OTPCodeLength    int            `mapstructure:"otp_code_length" validate:"required"`
+	OTPTTL           int            `mapstructure:"otp_ttl" validate:"required"` // seconds
+	UnderDevelopment bool           `mapstructure:"under_development"`
+	JWTSecret        string         `mapstructure:"jwt_secret" validate:"required"`
+	TestUser         TestUserConfig `mapstructure:"test_user"`
+	AccTokenExpTime  int            `mapstructure:"access_token_exp_time" validate:"required"` // minutes
+}
+
+type TestUserConfig struct {
+	PhoneNumber string `mapstructure:"phone_number" validate:"required,e164"`
+	OTPCode     string `mapstructure:"otp_code" validate:"required,numeric"`
+}
+type RedisConfig struct {
+	Host         string        `mapstructure:"host" validate:"required"`
+	Port         int           `mapstructure:"port" validate:"required,number"`
+	Password     string        `mapstructure:"password"`
+	DB           int           `mapstructure:"db"`
+	MaxRetries   int           `mapstructure:"max_retries" validate:"required,min=1"`
+	PoolSize     int           `mapstructure:"pool_size" validate:"required,min=1"`
+	MinIdleConns int           `mapstructure:"min_idle_conns" validate:"required,min=1"`
+	Timeouts     RedisTimeouts `mapstructure:"timeouts" validate:"required"`
+}
+
+type RedisTimeouts struct {
+	Dial  int `mapstructure:"dial" validate:"required,min=1"`
+	Read  int `mapstructure:"read" validate:"required,min=1"`
+	Write int `mapstructure:"write" validate:"required,min=1"`
+	Idle  int `mapstructure:"idle" validate:"required,min=1"`
 }

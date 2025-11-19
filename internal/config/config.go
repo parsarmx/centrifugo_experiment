@@ -66,11 +66,11 @@ func NewLoggerEncoderConfig(cfg *LoggerConfig) zapcore.EncoderConfig {
 	}
 }
 
-func GetRabbitMQUrl(cfg *RabbitConfig) string {
-	return fmt.Sprintf("amqp://%s:%s@%s:%s/",
-		cfg.User,
-		cfg.Password,
-		cfg.Host,
-		cfg.Port,
-	)
-}
+// func GetRabbitMQUrl(cfg *RabbitConfig) string {
+// 	return fmt.Sprintf("amqp://%s:%s@%s:%s/",
+// 		cfg.User,
+// 		cfg.Password,
+// 		cfg.Host,
+// 		cfg.Port,
+// 	)
+// }

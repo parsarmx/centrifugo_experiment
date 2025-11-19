@@ -4,13 +4,16 @@ server:
   mode: development
   read_timeout: 10
   write_timeout: 10
+  cors:
+    allow_origins: "*"
+
 
 db:
-  host: db
+  host: localhost
   port: 5432
   user: myuser
   password: mypassword
-  dbname: golang_template
+  dbname: simple_asap
   sslmode: disable
   max_conns: 2
   min_conns: 1
@@ -31,8 +34,26 @@ logger:
     local_time: true
     compress: false
 
-rabbit:
-  host: mq
-  port: 5672
-  user: guest
-  password: guest
+auth:
+  under_development: true
+  otp_code_length: 6 # should be between 4 and 8 -----
+  otp_ttl: 120 # seconds --------
+  jwt_secret: "your-super-secret-key-should-be-at-least-32-chars"
+  access_token_exp_time: 15 # minutes
+  test_user:
+    phone_number: "+989000000000"
+    otp_code: "654321"
+
+redis:
+  host: "localhost"
+  port: "6379"
+  password: ""
+  db: 0
+  max_retries: 3
+  pool_size: 100
+  min_idle_conns: 10
+  timeouts:
+    dial: 5
+    read: 3
+    write: 3
+    idle: 5

@@ -3,8 +3,10 @@ package application
 import (
 	"context"
 	"fmt"
-	"golang_template/internal/broker"
+	"golang_template/api/router"
 	"golang_template/internal/config"
+	"golang_template/internal/database/postgres"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"
@@ -24,52 +26,38 @@ func NewApplication(ctx context.Context, config *config.Config) Application {
 	return &application{ctx: ctx, config: config}
 }
 
-func (a *application) RunEchoServer(lc fx.Lifecycle, e *echo.Echo, logger *zap.Logger) {
-	lc.Append(
-		fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				logger.Info("starting server...")
-
-				go func() {
-					e.Logger.Fatal(e.Start(fmt.Sprintf("%v:%v", a.config.Server.Host, a.config.Server.Port)))
-				}()
-
-				return nil
-			},
-			OnStop: func(ctx context.Context) error {
-				return nil
-			},
-		})
-}
-
-func (a *application) RunRabbitConnection(lc fx.Lifecycle, r broker.Rabbit, logger *zap.Logger) {
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			logger.Info("rabbitmq connected")
-
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			logger.Info("closing rabbitmq connection...")
-			r.Close()
-			return nil
-		},
-	})
-}
-
 func (a *application) Setup() {
 
 	app := fx.New(
 		fx.Provide(
 			a.InitRepository,
 			a.InitDatabase,
-			a.InitHandler,
+			a.InitContoller,
+			a.InitService,
 			a.InitLogger,
 			a.InitFramework,
-			a.InitRabbit,
+			a.InitRedis,
+			a.InitRouter,
 		),
-		fx.Invoke(a.RunEchoServer),
-		fx.Invoke(a.RunRabbitConnection),
+		postgres.Module,
+		fx.Invoke(func(lifecycle fx.Lifecycle, e *echo.Echo, logger *zap.Logger, router router.Router) {
+			lifecycle.Append(
+				fx.Hook{
+					OnStart: func(ctx context.Context) error {
+						logger.Info("starting server...")
+						router.AddRoutes(e)
+						go func() {
+							if err := e.Start(fmt.Sprintf("%v:%v", a.config.Server.Host, a.config.Server.Port)); err != nil && err != http.ErrServerClosed {
+								logger.Fatal("shutting down server", zap.Error(err))
+							}
+						}()
+						return nil
+					},
+					OnStop: func(ctx context.Context) error {
+						return nil
+					},
+				})
+		}),
 	)
 
 	app.Run()
