@@ -3,14 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 
 	"golang_template/internal/database/postgres"
 	"golang_template/internal/repository/models"
-
-	rpc_service "golang_template/proto"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -24,14 +21,12 @@ type RoomRepository interface {
 type roomRepository struct {
 	db     *gorm.DB
 	logger *zap.Logger
-	grpc   rpc_service.CentrifugoApiClient
 }
 
-func NewRoomRepository(db postgres.Database, logger *zap.Logger, grpc rpc_service.CentrifugoApiClient) RoomRepository {
+func NewRoomRepository(db postgres.Database, logger *zap.Logger) RoomRepository {
 	return &roomRepository{
 		db:     db.Gorm(),
 		logger: logger,
-		grpc:   grpc,
 	}
 }
 
@@ -71,42 +66,6 @@ func (r roomRepository) CreateRoom(ctx context.Context, roomName string, capacit
 		)
 		return nil, err
 	}
-
-	// Run a gRPC‌ request to publish joining in channel
-	go func() { // This should place inside service, anyway...
-		fmt.Println(room.Channel)
-		req := &rpc_service.PublishRequest{
-			Channel:     room.Channel,
-			Data:        []byte(fmt.Sprintf(`{"room_id":"%s","room_name":"%s","capacity":%d}`, room.ID, room.RoomName, room.Capacity)),
-			SkipHistory: false,
-			Tags: map[string]string{
-				"source": "room_service",
-			},
-		}
-
-		fmt.Println(r.grpc)
-		resp, err := r.grpc.Publish(context.Background(), req)
-		if err != nil {
-			fmt.Println(err)
-			// fmt.Println(resp.Error.Code, resp.Error.Message)
-			r.logger.Error("Failed to publish room creation", zap.Error(err))
-			return
-		}
-
-		// resp.Error.Code is uint
-		if resp.Error != nil && resp.Error.Code != 0 {
-			fmt.Println(resp.Error.Code, resp.Error.Message)
-			r.logger.Error("Centrifugo returned an error",
-				zap.Uint32("code", resp.Error.Code),
-				zap.String("msg", resp.Error.Message),
-			)
-			return
-		}
-		r.logger.Debug("Room published to Centrifugo successfully",
-			zap.String("room_id", room.ID.String()),
-			zap.String("channel", room.Channel),
-		)
-	}()
 
 	r.logger.Debug("Room created successfully",
 		zap.String("room_id", room.ID.String()),

@@ -4,6 +4,7 @@ import (
 	"golang_template/internal/config"
 	"golang_template/internal/producers"
 	"golang_template/internal/repository"
+	rpc_service "golang_template/proto"
 
 	"go.uber.org/zap"
 )
@@ -23,9 +24,10 @@ func NewService(
 	logger *zap.Logger,
 	redis producers.RedisClient,
 	config config.Config,
+	grpc rpc_service.CentrifugoApiClient,
 ) Service {
 	userService := NewUserService(repo.UserRepository(), logger, redis, config.Auth)
-	roomService := NewRoomService(repo.RoomRepository(), logger)
+	roomService := NewRoomService(repo.RoomRepository(), logger, grpc)
 	return &service{
 		userService: userService,
 		roomService: roomService,

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"golang_template/internal/database/postgres"
-	rpc_service "golang_template/proto"
 
 	"go.uber.org/zap"
 )
@@ -18,9 +17,9 @@ type repository struct {
 	roomRepository RoomRepository
 }
 
-func NewRepository(ctx context.Context, db postgres.Database, logger *zap.Logger, grpc rpc_service.CentrifugoApiClient) Repository {
+func NewRepository(ctx context.Context, db postgres.Database, logger *zap.Logger) Repository {
 	userRepository := NewUserRepository(db, logger)
-	roomRepository := NewRoomRepository(db, logger, grpc)
+	roomRepository := NewRoomRepository(db, logger)
 	return &repository{
 		userRepository: userRepository,
 		roomRepository: roomRepository,

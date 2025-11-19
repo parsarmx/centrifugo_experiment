@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"golang_template/internal/repository"
 	"golang_template/internal/repository/models"
+	rpc_service "golang_template/proto"
 
 	"go.uber.org/zap"
 )
@@ -16,20 +18,24 @@ const (
 
 type RoomService interface {
 	CreateRoom(ctx context.Context, roomName string, capacity int) (*models.Room, error)
+	SendMessage(ctx context.Context, message string, channel string)
 }
 
 type roomService struct {
 	repo   repository.RoomRepository
 	logger *zap.Logger
+	grpc   rpc_service.CentrifugoApiClient
 }
 
 func NewRoomService(
 	repo repository.RoomRepository,
 	logger *zap.Logger,
+	grpc rpc_service.CentrifugoApiClient,
 ) RoomService {
 	return &roomService{
 		repo:   repo,
 		logger: logger,
+		grpc:   grpc,
 	}
 }
 
@@ -62,4 +68,41 @@ func (s *roomService) CreateRoom(ctx context.Context, roomName string, capacity 
 		zap.String("channel", room.Channel))
 
 	return room, nil
+}
+
+// it needs at least an error
+func (s *roomService) SendMessage(ctx context.Context, message string, channel string) {
+	// maybe add a repo to store messages inside db ...
+
+	// Run a gRPC‌ request to publish joining in channel
+	go func() { // This should place inside service, anyway...
+		req := &rpc_service.PublishRequest{
+			Channel:     channel,
+			Data:        []byte(fmt.Sprintf(`{"message":"%s"}`, message)),
+			SkipHistory: false,
+			Tags: map[string]string{
+				"source": "room_service",
+			},
+		}
+
+		fmt.Println(s.grpc)
+		resp, err := s.grpc.Publish(context.Background(), req)
+		if err != nil {
+			fmt.Println(err)
+			// fmt.Println(resp.Error.Code, resp.Error.Message)
+			s.logger.Error("Failed to publish room creation", zap.Error(err))
+			return
+		}
+
+		if resp.Error != nil && resp.Error.Code != 0 {
+			fmt.Println(resp.Error.Code, resp.Error.Message)
+			s.logger.Error("Centrifugo returned an error",
+				zap.Uint32("code", resp.Error.Code),
+				zap.String("msg", resp.Error.Message),
+			)
+			return
+		}
+
+	}()
+	// it needs at least an error
 }

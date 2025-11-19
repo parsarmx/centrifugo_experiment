@@ -14,6 +14,7 @@ import (
 
 type RoomController interface {
 	CreateRoom(ctx echo.Context) error
+	SendMessage(ctx echo.Context) error
 }
 
 type roomController struct {
@@ -58,5 +59,25 @@ func (c *roomController) CreateRoom(ctx echo.Context) error {
 		"room_id":  room.ID,
 		"channel":  room.Channel,
 		"capacity": room.Capacity,
+	})
+}
+
+func (c *roomController) SendMessage(ctx echo.Context) error {
+	var req dto.SendMessageRequest
+
+	if err := ctx.Bind(&req); err != nil {
+		c.logger.Error("Failed to bind request", zap.Error(err))
+		return response.SendError(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.requestValidator.ValidateStruct(req); err != nil {
+		return response.SendError(ctx, "Invalid input", http.StatusBadRequest, err.Error())
+	}
+
+	// it needs at least an error
+	c.service.SendMessage(ctx.Request().Context(), req.Message, req.Channel)
+
+	return ctx.JSON(http.StatusAccepted, map[string]interface{}{
+		"ok": true,
 	})
 }

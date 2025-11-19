@@ -55,7 +55,7 @@ func (r *router) AddRoutes(e *echo.Echo) {
 
 	apiGroup := e.Group("/api/v0/public")
 
-	_ = e.Group("api/v0/private", echojwt.New(
+	private := e.Group("api/v0/private", echojwt.New(
 		echojwt.MiddlewareConfig{
 			Secret:        r.config.Auth.JWTSecret,
 			Logger:        r.logger,
@@ -65,6 +65,9 @@ func (r *router) AddRoutes(e *echo.Echo) {
 
 	apiGroup.POST("/otp/send", r.controllers.UserController().SendOTP)
 	apiGroup.POST("/otp/login", r.controllers.UserController().OTPLogin)
-	apiGroup.POST("/room/create", r.controllers.RoomController().CreateRoom)
+
+	// private
+	private.POST("/room/create", r.controllers.RoomController().CreateRoom)
+	private.POST("/room/send_message", r.controllers.RoomController().SendMessage)
 
 }
