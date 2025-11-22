@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 const (
@@ -135,6 +136,9 @@ func (s *userService) OTPLogin(ctx context.Context, data dao.OTPLoginRequestData
 	}
 
 	userData, err := s.repo.UserDataByPhoneNumber(ctx, phoneNumber)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		userData, err = s.repo.UserCreate(ctx, phoneNumber)
+	}
 
 	issuedAt := time.Now()
 	accExpiresAt := issuedAt.Add(time.Duration(s.authConfig.AccTokenExpTime) * time.Minute)

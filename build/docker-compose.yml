@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheuss
+    network_mode: host
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    container_name: centrifugo
+    command: ["centrifugo", "-c", "config.json"]
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - ./:/centrifugo
+    ports:
+      - "8000:8000"
+      - "10000:10000"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14
+    container_name: my-postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: rediss
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
