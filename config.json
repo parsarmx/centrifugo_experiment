@@ -1,9 +1,17 @@
 {
+  "prometheus": {
+    "enabled": true
+  },
+  "swagger":{
+    "enabled": true
+    },
   "client": {
     "token": {
       "hmac_secret_key": "g6kCWynbtdYuVlUTDJW1MRKlo1i2M_PxzmvgZZY26Agqpia-N0bBndVpOQTTh0bpuI0fS7iq61U1CeEAlaNsNw"
     },
-    "allowed_origins": ["http://localhost:3001"]
+    "allowed_origins": ["http://localhost:3001"],
+    "ping_interval": "120s",
+    "pong_timeout": "119s"
   },
   "admin": {
     "enabled": true,
@@ -24,4 +32,4 @@
     "enabled": true
   }
 
-}  
+} 
