@@ -16,6 +16,7 @@ import (
 type RoomRepository interface {
 	CreateRoom(ctx context.Context, roomName string, capacity int) (*models.Room, error)
 	LeaveRoom(ctx context.Context, roomID, userID string) error
+	FetchAllRooms(ctx context.Context) ([]*models.Room, error)
 }
 
 type roomRepository struct {
@@ -73,6 +74,19 @@ func (r roomRepository) CreateRoom(ctx context.Context, roomName string, capacit
 	)
 
 	return room, nil
+}
+
+func (r roomRepository) FetchAllRooms(ctx context.Context) ([]*models.Room, error) {
+	var rooms []*models.Room
+
+	if err := r.db.WithContext(ctx).Find(&rooms).Error; err != nil {
+		r.logger.Error("Error while fetching rooms", zap.Error(err))
+		return nil, err
+	}
+
+	r.logger.Debug("Fetched all rooms", zap.Int("count", len(rooms)))
+
+	return rooms, nil
 }
 
 func (r roomRepository) LeaveRoom(ctx context.Context, roomID, userID string) error {

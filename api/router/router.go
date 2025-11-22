@@ -65,8 +65,9 @@ func (r *router) AddRoutes(e *echo.Echo) {
 
 	apiGroup.POST("/otp/send", r.controllers.UserController().SendOTP)
 	apiGroup.POST("/otp/login", r.controllers.UserController().OTPLogin)
-
+	apiGroup.GET("/room", r.controllers.RoomController().GetAllRooms)
 	// private
+
 	private.POST("/room/create", r.controllers.RoomController().CreateRoom)
 	private.POST("/room/send_message", r.controllers.RoomController().SendMessage)
 

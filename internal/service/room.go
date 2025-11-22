@@ -19,6 +19,7 @@ const (
 type RoomService interface {
 	CreateRoom(ctx context.Context, roomName string, capacity int) (*models.Room, error)
 	SendMessage(ctx context.Context, userId, message, channel string)
+	GetAllRooms(ctx context.Context) ([]*models.Room, error)
 }
 
 type roomService struct {
@@ -68,6 +69,24 @@ func (s *roomService) CreateRoom(ctx context.Context, roomName string, capacity 
 		zap.String("channel", room.Channel))
 
 	return room, nil
+}
+
+func (s *roomService) GetAllRooms(ctx context.Context) ([]*models.Room, error) {
+	ctx, cancel := context.WithTimeout(ctx, roomServiceDefaultTimeout)
+	defer cancel()
+
+	rooms, err := s.repo.FetchAllRooms(ctx)
+	if err != nil {
+		s.logger.Error("Failed to Fetch rooms",
+			zap.Error(err))
+		return nil, err
+	}
+
+	return rooms, nil
+}
+
+func (s *roomService) GetRoomsById(ctx context.Context, roomId string) (models.Room, error) {
+	return models.Room{}, nil
 }
 
 // it needs at least an error

@@ -16,6 +16,7 @@ import (
 type RoomController interface {
 	CreateRoom(ctx echo.Context) error
 	SendMessage(ctx echo.Context) error
+	GetAllRooms(ctx echo.Context) error
 }
 
 type roomController struct {
@@ -81,5 +82,18 @@ func (c *roomController) SendMessage(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusAccepted, map[string]interface{}{
 		"ok": true,
+	})
+}
+
+func (c *roomController) GetAllRooms(ctx echo.Context) error {
+	rooms, err := c.service.GetAllRooms(ctx.Request().Context())
+	if err != nil {
+		c.logger.Error("Failed to fetch rooms", zap.Error(err))
+		return response.SendError(ctx, "Failed to fetch rooms", http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]interface{}{
+		"ok":    true,
+		"rooms": rooms,
 	})
 }
