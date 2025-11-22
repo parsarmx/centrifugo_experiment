@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"golang_template/api/dto"
 	"golang_template/api/response"
 	"golang_template/internal/pkg"
@@ -65,6 +66,7 @@ func (c *roomController) CreateRoom(ctx echo.Context) error {
 func (c *roomController) SendMessage(ctx echo.Context) error {
 	var req dto.SendMessageRequest
 
+	userId := fmt.Sprintf("%v", ctx.Get("X-User-ID"))
 	if err := ctx.Bind(&req); err != nil {
 		c.logger.Error("Failed to bind request", zap.Error(err))
 		return response.SendError(ctx, "Invalid request body", http.StatusBadRequest, err.Error())
@@ -75,7 +77,7 @@ func (c *roomController) SendMessage(ctx echo.Context) error {
 	}
 
 	// it needs at least an error
-	c.service.SendMessage(ctx.Request().Context(), req.Message, req.Channel)
+	c.service.SendMessage(ctx.Request().Context(), userId, req.Message, req.Channel)
 
 	return ctx.JSON(http.StatusAccepted, map[string]interface{}{
 		"ok": true,

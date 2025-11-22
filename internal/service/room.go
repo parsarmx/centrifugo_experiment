@@ -18,7 +18,7 @@ const (
 
 type RoomService interface {
 	CreateRoom(ctx context.Context, roomName string, capacity int) (*models.Room, error)
-	SendMessage(ctx context.Context, message string, channel string)
+	SendMessage(ctx context.Context, userId, message, channel string)
 }
 
 type roomService struct {
@@ -71,14 +71,14 @@ func (s *roomService) CreateRoom(ctx context.Context, roomName string, capacity 
 }
 
 // it needs at least an error
-func (s *roomService) SendMessage(ctx context.Context, message string, channel string) {
+func (s *roomService) SendMessage(ctx context.Context, userId, message, channel string) {
 	// maybe add a repo to store messages inside db ...
 
 	// Run a gRPC‌ request to publish joining in channel
 	go func() { // This should place inside service, anyway...
 		req := &rpc_service.PublishRequest{
 			Channel:     channel,
-			Data:        []byte(fmt.Sprintf(`{"message":"%s"}`, message)),
+			Data:        []byte(fmt.Sprintf(`{"user_id": "%s", "message":"%s"}`, userId, message)),
 			SkipHistory: false,
 			Tags: map[string]string{
 				"source": "room_service",
